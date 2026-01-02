@@ -48,7 +48,7 @@ Any updates to this privacy policy will be reflected in app updates with an upda
 For questions about this privacy policy, contact:
 
 Benjamin Bray
-ben@yourdomain.com
+sjbbray@gmail.com
 
 ---
 
