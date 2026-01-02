@@ -19,6 +19,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: love2d/love-android
+          submodules: recursive
           path: love-android
       
       - name: Set up JDK 17
@@ -46,13 +47,18 @@ jobs:
         run: |
           cd love-android
           
-          # Update app name
-          sed -i 's/app_name">LÖVE for Android/app_name">Classroom Pulse/' app/src/main/res/values/strings.xml
+          # Update application ID in build.gradle (try both .gradle and .gradle.kts)
+          if [ -f "app/build.gradle" ]; then
+            sed -i 's/org.love2d.android/com.benjaminbray.classroompulse/g' app/build.gradle
+            sed -i 's/versionName "[^"]*"/versionName "1.2"/g' app/build.gradle
+            echo "Updated app/build.gradle"
+          fi
           
-          # Update application ID and version in build.gradle
-          sed -i 's/org.love2d.android/com.benjaminbray.classroompulse/' app/build.gradle
-          sed -i 's/versionCode [0-9]*/versionCode 2/' app/build.gradle
-          sed -i 's/versionName "[^"]*"/versionName "1.2"/' app/build.gradle
+          if [ -f "app/build.gradle.kts" ]; then
+            sed -i 's/org.love2d.android/com.benjaminbray.classroompulse/g' app/build.gradle.kts
+            sed -i 's/versionName = "[^"]*"/versionName = "1.2"/g' app/build.gradle.kts
+            echo "Updated app/build.gradle.kts"
+          fi
       
       - name: Build APK
         run: |
@@ -60,9 +66,17 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleEmbedRelease --no-daemon
       
-      - name: Rename APK
+      - name: Find and rename APK
         run: |
-          mv love-android/app/build/outputs/apk/embed/release/app-embed-release-unsigned.apk ClassroomPulse-v1.2.apk
+          APK_PATH=$(find love-android -name "*.apk" 2>/dev/null | grep -i release | head -1)
+          if [ -n "$APK_PATH" ]; then
+            cp "$APK_PATH" ClassroomPulse-v1.2.apk
+            echo "Found APK at: $APK_PATH"
+          else
+            echo "Looking for any APK..."
+            find love-android -name "*.apk" 2>/dev/null
+            exit 1
+          fi
       
       - name: Upload APK
         uses: actions/upload-artifact@v4
